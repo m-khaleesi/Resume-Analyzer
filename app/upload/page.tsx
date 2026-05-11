@@ -1,161 +1,308 @@
 "use client";
 
-import { supabase } from "@/lib/supabaseClient";
 import { useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
+
+const JOB_ROLES = [
+  "Software Engineer",
+  "Frontend Developer",
+  "Backend Developer",
+  "Full Stack Developer",
+  "Data Scientist",
+  "Data Analyst",
+  "Machine Learning Engineer",
+  "DevOps Engineer",
+  "Product Manager",
+  "UI/UX Designer",
+  "Graphic Designer",
+  "Marketing Specialist",
+  "Business Analyst",
+  "Project Manager",
+  "Cybersecurity Analyst",
+  "Cloud Engineer",
+  "Mobile Developer",
+  "QA Engineer",
+  "HR Specialist",
+  "Sales Representative",
+];
+
+type UploadStage =
+  | "idle"
+  | "uploading"
+  | "extracting"
+  | "analyzing"
+  | "saving"
+  | "done"
+  | "error";
 
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
-  const [jobRole, setJobRole] = useState("");
+  const [jobRole, setJobRole] = useState<string>("");
+  const [stage, setStage] = useState<UploadStage>("idle");
+  const [errorMessage, setErrorMessage] = useState<string>("");
   const router = useRouter();
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-    }
+  const stageLabel: Record<UploadStage, string> = {
+    idle: "",
+    uploading: "Uploading resume to storage...",
+    extracting: "Extracting text from resume...",
+    analyzing: "Analyzing resume with Gemini AI...",
+    saving: "Saving results...",
+    done: "Done! Redirecting...",
+    error: errorMessage,
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = e.target.files?.[0] ?? null;
+    setFile(selected);
+    setErrorMessage("");
+    setStage("idle");
+  };
 
-    if (!file || !jobRole) {
-      alert("Please upload a file and enter a job role.");
+  const handleSubmit = async () => {
+    setErrorMessage("");
+
+    if (!file) {
+      setErrorMessage("Please select a resume file.");
+      setStage("error");
+      return;
+    }
+
+    const allowedTypes = [
+      "application/pdf",
+      "text/plain",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      setErrorMessage("Only PDF, TXT, DOCX, JPG, PNG, and WEBP files are supported.");
+      setStage("error");
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setErrorMessage("File size must be under 10MB.");
+      setStage("error");
+      return;
+    }
+
+    if (!jobRole) {
+      setErrorMessage("Please select a job role.");
+      setStage("error");
+      return;
+    }
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      router.push("/login");
       return;
     }
 
     try {
-      // 🔹 Create unique file name
+      // --- STEP 1: Upload to Supabase Storage ---
+      setStage("uploading");
       const fileExt = file.name.split(".").pop();
-      const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `uploads/${fileName}`;
+      const filePath = `${user.id}/${Date.now()}.${fileExt}`;
 
-      // 🔹 Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
-        .from("resumes") // bucket name
-        .upload(filePath, file);
+        .from("resumes")
+        .upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: false,
+        });
 
       if (uploadError) {
-        console.log(uploadError.message);
-        alert("Upload failed");
-        return;
+        throw new Error(`Upload failed: ${uploadError.message}`);
       }
 
-      // 🔹 Get public URL
-      const { data } = supabase.storage
+      const { data: urlData } = supabase.storage
         .from("resumes")
         .getPublicUrl(filePath);
 
-      const fileUrl = data.publicUrl;
+      const fileUrl = urlData.publicUrl;
 
-      // 🔐 Get current user
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      // --- STEP 2: Extract Text ---
+      setStage("extracting");
+      const extractForm = new FormData();
+      extractForm.append("file", file);
 
-      if (!user) {
-        alert("User not found");
-        return;
+      let extractRes: Response;
+      try {
+        extractRes = await fetch("/api/extract-text", {
+          method: "POST",
+          body: extractForm,
+        });
+      } catch (fetchErr) {
+        throw new Error(
+          "Network error calling extract-text: " +
+            (fetchErr instanceof Error ? fetchErr.message : String(fetchErr))
+        );
       }
 
-      // 🔹 Save to your table (resume_up)
-      const { error: insertError } = await supabase
-        .from("resume_up") // ✅ your table name
-        .insert([
-          {
-            user_id: user.id,
-            file_url: fileUrl,
-            job_role: jobRole,
-            score: Math.floor(Math.random() * 30) + 70, // fake score
-          },
-        ]);
-
-      if (insertError) {
-        console.log(insertError.message);
-        alert("Failed to save data");
-        return;
+      const extractData = await extractRes.json();
+      if (!extractRes.ok) {
+        throw new Error(extractData.error || `Extract failed with status ${extractRes.status}`);
       }
 
-      alert("Resume uploaded successfully!");
+      const resumeText: string = extractData.text;
 
-      // 🔹 Redirect back to dashboard
-      router.push("/dashboard");
+      // --- STEP 3: Analyze with Gemini AI ---
+      setStage("analyzing");
 
-    } catch (err) {
-      console.log(err);
-      alert("Something went wrong.");
+      let analyzeRes: Response;
+      try {
+        analyzeRes = await fetch("/api/analyze-resume", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ resumeText, jobRole }),
+        });
+      } catch (fetchErr) {
+        throw new Error(
+          "Network error calling analyze-resume: " +
+            (fetchErr instanceof Error ? fetchErr.message : String(fetchErr))
+        );
+      }
+
+      const analyzeData = await analyzeRes.json();
+      if (!analyzeRes.ok) {
+        throw new Error(analyzeData.error || `Analyze failed with status ${analyzeRes.status}`);
+      }
+
+      const { score, feedback, keywords } = analyzeData as {
+        score: number;
+        feedback: string;
+        keywords: string[];
+      };
+
+      // --- STEP 4: Save to Supabase ---
+      setStage("saving");
+      const { error: dbError } = await supabase.from("resume_up").insert({
+        user_id: user.id,
+        file_url: fileUrl,
+        job_role: jobRole,
+        score,
+        feedback,
+        keywords,
+      });
+
+      if (dbError) {
+        throw new Error(`Database save failed: ${dbError.message}`);
+      }
+
+      // --- STEP 5: Redirect ---
+      setStage("done");
+      router.push("/result");
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "An unexpected error occurred.";
+      setErrorMessage(message);
+      setStage("error");
     }
   };
 
+  const isLoading = ["uploading", "extracting", "analyzing", "saving", "done"].includes(stage);
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="bg-card w-full max-w-md p-8 rounded-lg shadow-lg">
-        
-        <h1 className="text-2xl font-bold text-primary text-center mb-6">
-          Upload Resume
-        </h1>
+    <div className="bg-white text-zinc-900 min-h-screen">
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+      {/* HEADER */}
+      <header className="p-4 border-b">
+        <h1 className="text-2xl font-bold">Upload Resume</h1>
+        <p className="text-sm text-zinc-500">AI-powered resume analyzer</p>
+      </header>
 
-          {/* Upload Area */}
-          <div className="flex items-center justify-center bg-input border-dashed border-2 border-primary rounded-lg py-8 px-4">
-            <label className="cursor-pointer text-center">
-              
-              <div className="flex flex-col items-center">
-                <div className="text-4xl mb-2">📄</div>
+      <div className="max-w-xl mx-auto p-6 space-y-6">
 
-                <span className="text-primary text-sm">
-                  Drag and drop your resume here or
-                </span>
-
-                <span className="text-primary underline text-sm">
-                  browse
-                </span>
-              </div>
-
-              <input
-                type="file"
-                accept=".pdf,.txt"
-                className="hidden"
-                onChange={handleFileChange}
-              />
-            </label>
-          </div>
-
-          {/* File Name */}
+        {/* FILE INPUT */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium">
+            Resume File{" "}
+            <span className="text-zinc-400">(PDF, TXT, DOCX, JPG, PNG — max 10MB)</span>
+          </label>
+          <input
+            type="file"
+            accept=".pdf,.txt,.docx,image/jpeg,image/png,image/webp"
+            onChange={handleFileChange}
+            disabled={isLoading}
+            className="block w-full text-sm border border-zinc-300 rounded-lg px-3 py-2 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:bg-zinc-100 file:text-sm file:font-medium cursor-pointer disabled:opacity-50"
+          />
           {file && (
-            <p className="text-sm text-primary">
-              Selected file: {file.name}
+            <p className="text-xs text-zinc-500">
+              Selected: {file.name} ({(file.size / 1024).toFixed(1)} KB)
             </p>
           )}
+        </div>
 
-          <div className="text-primary text-sm">
-            Accepted file types: PDF, TXT
-          </div>
-
-          {/* Job Role */}
-          <div>
-            <label className="block text-primary">Job Role</label>
-            <input
-              type="text"
-              placeholder="Enter your job role"
-              value={jobRole}
-              onChange={(e) => setJobRole(e.target.value)}
-              className="w-full bg-input text-primary border-b-2 border-primary focus:outline-none py-1"
-            />
-          </div>
-
-          {/* Submit */}
-          <button
-            type="submit"
-            className="w-full bg-primary text-primary-foreground py-2 rounded-lg hover:opacity-80"
+        {/* JOB ROLE SELECT */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium">Target Job Role</label>
+          <select
+            value={jobRole}
+            onChange={(e) => setJobRole(e.target.value)}
+            disabled={isLoading}
+            className="block w-full text-sm border border-zinc-300 rounded-lg px-3 py-2 bg-white disabled:opacity-50"
           >
-            Analyze Resume
-          </button>
-        </form>
+            <option value="">-- Select a job role --</option>
+            {JOB_ROLES.map((role) => (
+              <option key={role} value={role}>
+                {role}
+              </option>
+            ))}
+          </select>
+        </div>
 
-        <p className="text-center text-sm text-muted mt-4">
-          Your resume will be analyzed using AI
-        </p>
+        {/* STAGE STATUS */}
+        {stage !== "idle" && stage !== "error" && (
+          <div className="flex items-center space-x-3 bg-zinc-50 border rounded-lg px-4 py-3">
+            {isLoading && stage !== "done" && (
+              <svg
+                className="animate-spin h-5 w-5 text-zinc-600 flex-shrink-0"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v8z"
+                />
+              </svg>
+            )}
+            {stage === "done" && <span>✅</span>}
+            <span className="text-sm text-zinc-700">{stageLabel[stage]}</span>
+          </div>
+        )}
+
+        {/* ERROR */}
+        {stage === "error" && errorMessage && (
+          <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+            <p className="text-sm text-red-600">⚠️ {errorMessage}</p>
+          </div>
+        )}
+
+        {/* SUBMIT BUTTON */}
+        <button
+          onClick={handleSubmit}
+          disabled={isLoading}
+          className="w-full bg-black text-white py-2 rounded-lg font-medium hover:bg-zinc-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isLoading ? stageLabel[stage] : "Analyze Resume"}
+        </button>
       </div>
     </div>
   );
