@@ -18,31 +18,55 @@ export async function POST(req: NextRequest) {
     }
 
     const prompt = `
-You are an expert resume reviewer and ATS optimization specialist.
+You are an expert ATS resume reviewer for ${jobRole} roles.
 
-Analyze the following resume for the job role: "${jobRole}".
+Analyze the resume below and return ONLY a valid JSON object (no markdown, no backticks, no explanation).
 
-Evaluate the resume on the following criteria:
-1. Grammar and spelling
-2. Readability and clarity
-3. Resume structure and formatting
-4. Professionalism and tone
-5. Keyword optimization for the role
-6. Relevance to the selected job role: "${jobRole}"
-7. Missing important sections (e.g., Summary, Skills, Experience, Education, Certifications)
-8. ATS-friendliness
-9. Strengths and weaknesses
+STRICT RULES:
+- Every observation goes into ONLY ONE section — no duplicates across sections
+- "strengths" = positive qualities only (skills, achievements, strong stack usage)
+- "weaknesses" = structural/content problems only (missing sections, vague descriptions, no GitHub/portfolio)
+- "grammar_issues" = ONLY spelling/grammar/wording mistakes
+- "ats_suggestions" = ONLY keyword and ATS readability improvements
+- "formatting_improvements" = ONLY layout, structure, readability issues
+- "role_suggestions" = ONLY role-specific improvements for ${jobRole}
 
-Return ONLY a valid JSON object (no markdown, no backticks, no explanation) in this exact format:
+Return this exact JSON format:
 {
-  "score": <number between 0 and 100>,
-  "feedback": "<detailed multiline feedback as a single string including: Resume Strengths, Resume Weaknesses, Grammar Issues, ATS Optimization Suggestions, Formatting Improvements, and Role-Specific Suggestions>",
-  "keywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5", "keyword6", "keyword7", "keyword8"]
+  "score": <number 0-100>,
+  "score_breakdown": {
+    "skills_match": <number 0-100>,
+    "experience": <number 0-100>,
+    "formatting": <number 0-100>,
+    "keywords": <number 0-100>
+  },
+  "strengths": ["...", "..."],
+  "weaknesses": ["...", "..."],
+  "grammar_issues": [
+    {
+      "error": "<exact wrong phrase>",
+      "correction": "<corrected version>",
+      "explanation": "<brief reason>"
+    }
+  ],
+  "ats_suggestions": ["...", "..."],
+  "formatting_improvements": ["...", "..."],
+  "role_suggestions": ["...", "..."],
+  "keywords": ["keyword1", "keyword2"],
+  "highlights": [
+    {
+      "text": "<exact phrase copied verbatim from resume>",
+      "type": "weak_wording | missing_skill | poor_formatting | no_achievement",
+      "suggestion": "<short improvement tip>"
+    }
+  ]
 }
 
-The "keywords" array should contain 6-10 important keywords that are either:
-- Present in the resume and relevant to the ${jobRole} role
-- Missing from the resume but critical for the ${jobRole} role (prefix these with "Missing: ")
+RULES:
+- score_breakdown must reflect the overall score contextually
+- highlights: 3–8 exact verbatim phrases from the resume
+- keywords: 6–10 items; prefix missing ones with "Missing: "
+- Each array must have at least 1 item; if truly none, write ["None"]
 
 Resume Content:
 """
@@ -65,7 +89,31 @@ ${resumeText.slice(0, 12000)}
         const response = await result.response;
         const rawText = response.text();
 
-        let parsed: { score: number; feedback: string; keywords: string[] };
+        let parsed: {
+          score: number;
+          score_breakdown: {
+            skills_match: number;
+            experience: number;
+            formatting: number;
+            keywords: number;
+          };
+          strengths: string[];
+          weaknesses: string[];
+          grammar_issues: {
+            error: string;
+            correction: string;
+            explanation: string;
+          }[];
+          ats_suggestions: string[];
+          formatting_improvements: string[];
+          role_suggestions: string[];
+          keywords: string[];
+          highlights: {
+            text: string;
+            type: string;
+            suggestion: string;
+          }[];
+        };
 
         try {
           const cleaned = rawText
@@ -80,17 +128,37 @@ ${resumeText.slice(0, 12000)}
           parsed = JSON.parse(jsonMatch[0]);
         }
 
-        if (typeof parsed.score !== "number" || typeof parsed.feedback !== "string") {
+        if (typeof parsed.score !== "number") {
           throw new Error("AI returned invalid structure.");
         }
 
-        const keywords = Array.isArray(parsed.keywords) ? parsed.keywords : [];
+        // Build a structured feedback JSON string for the `feedback` column
+        // so the existing parseFeedback() on the frontend can consume it
+        const feedbackPayload = JSON.stringify({
+          strengths:               Array.isArray(parsed.strengths) ? parsed.strengths : [],
+          weaknesses:              Array.isArray(parsed.weaknesses) ? parsed.weaknesses : [],
+          grammar_issues:          Array.isArray(parsed.grammar_issues) ? parsed.grammar_issues : [],
+          ats_suggestions:         Array.isArray(parsed.ats_suggestions) ? parsed.ats_suggestions : [],
+          formatting_improvements: Array.isArray(parsed.formatting_improvements) ? parsed.formatting_improvements : [],
+          role_suggestions:        Array.isArray(parsed.role_suggestions) ? parsed.role_suggestions : [],
+        });
 
         return NextResponse.json({
           score: Math.min(100, Math.max(0, Math.round(parsed.score))),
-          feedback: parsed.feedback,
-          keywords,
+          score_breakdown: parsed.score_breakdown ?? {
+            skills_match: 0,
+            experience: 0,
+            formatting: 0,
+            keywords: 0,
+          },
+          feedback:                feedbackPayload,   // ← stored as JSON string in Supabase
+          keywords:                Array.isArray(parsed.keywords) ? parsed.keywords : [],
+          highlights:              Array.isArray(parsed.highlights) ? parsed.highlights : [],
+          ats_suggestions:         Array.isArray(parsed.ats_suggestions) ? parsed.ats_suggestions : [],
+          formatting_improvements: Array.isArray(parsed.formatting_improvements) ? parsed.formatting_improvements : [],
+          role_suggestions:        Array.isArray(parsed.role_suggestions) ? parsed.role_suggestions : [],
         });
+
       } catch (err: unknown) {
         lastError = err instanceof Error ? err : new Error(String(err));
         if (

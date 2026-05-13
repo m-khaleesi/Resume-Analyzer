@@ -79,7 +79,9 @@ export default function UploadPage() {
     ];
 
     if (!allowedTypes.includes(file.type)) {
-      setErrorMessage("Only PDF, TXT, DOCX, JPG, PNG, and WEBP files are supported.");
+      setErrorMessage(
+        "Only PDF, TXT, DOCX, JPG, PNG, and WEBP files are supported."
+      );
       setStage("error");
       return;
     }
@@ -106,8 +108,9 @@ export default function UploadPage() {
     }
 
     try {
-      // --- STEP 1: Upload to Supabase Storage ---
+      // STEP 1: Upload
       setStage("uploading");
+
       const fileExt = file.name.split(".").pop();
       const filePath = `${user.id}/${Date.now()}.${fileExt}`;
 
@@ -128,12 +131,14 @@ export default function UploadPage() {
 
       const fileUrl = urlData.publicUrl;
 
-      // --- STEP 2: Extract Text ---
+      // STEP 2: Extract Text
       setStage("extracting");
+
       const extractForm = new FormData();
       extractForm.append("file", file);
 
       let extractRes: Response;
+
       try {
         extractRes = await fetch("/api/extract-text", {
           method: "POST",
@@ -142,21 +147,28 @@ export default function UploadPage() {
       } catch (fetchErr) {
         throw new Error(
           "Network error calling extract-text: " +
-            (fetchErr instanceof Error ? fetchErr.message : String(fetchErr))
+            (fetchErr instanceof Error
+              ? fetchErr.message
+              : String(fetchErr))
         );
       }
 
       const extractData = await extractRes.json();
+
       if (!extractRes.ok) {
-        throw new Error(extractData.error || `Extract failed with status ${extractRes.status}`);
+        throw new Error(
+          extractData.error ||
+            `Extract failed with status ${extractRes.status}`
+        );
       }
 
       const resumeText: string = extractData.text;
 
-      // --- STEP 3: Analyze with Gemini AI ---
+      // STEP 3: Analyze
       setStage("analyzing");
 
       let analyzeRes: Response;
+
       try {
         analyzeRes = await fetch("/api/analyze-resume", {
           method: "POST",
@@ -166,144 +178,255 @@ export default function UploadPage() {
       } catch (fetchErr) {
         throw new Error(
           "Network error calling analyze-resume: " +
-            (fetchErr instanceof Error ? fetchErr.message : String(fetchErr))
+            (fetchErr instanceof Error
+              ? fetchErr.message
+              : String(fetchErr))
         );
       }
 
       const analyzeData = await analyzeRes.json();
+
       if (!analyzeRes.ok) {
-        throw new Error(analyzeData.error || `Analyze failed with status ${analyzeRes.status}`);
+        throw new Error(
+          analyzeData.error ||
+            `Analyze failed with status ${analyzeRes.status}`
+        );
       }
 
-      const { score, feedback, keywords } = analyzeData as {
-        score: number;
-        feedback: string;
-        keywords: string[];
-      };
-
-      // --- STEP 4: Save to Supabase ---
-      setStage("saving");
-      const { error: dbError } = await supabase.from("resume_up").insert({
-        user_id: user.id,
-        file_url: fileUrl,
-        job_role: jobRole,
+      const {
         score,
         feedback,
         keywords,
-      });
+        score_breakdown,
+        highlights,
+      } = analyzeData as {
+        score: number;
+        feedback: string;
+        keywords: string[];
+        score_breakdown: {
+          skills_match: number;
+          experience: number;
+          formatting: number;
+          keywords: number;
+        };
+        highlights: {
+          text: string;
+          type: string;
+          suggestion: string;
+        }[];
+      };
+
+      // STEP 4: Save
+      setStage("saving");
+
+      const { error: dbError } = await supabase
+        .from("resume_up")
+        .insert({
+          user_id: user.id,
+          file_url: fileUrl,
+          job_role: jobRole,
+          score,
+          feedback,
+          keywords,
+          score_breakdown,
+          highlights,
+        });
 
       if (dbError) {
         throw new Error(`Database save failed: ${dbError.message}`);
       }
 
-      // --- STEP 5: Redirect ---
+      // STEP 5: Redirect
       setStage("done");
+
       router.push("/result");
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : "An unexpected error occurred.";
+        err instanceof Error
+          ? err.message
+          : "An unexpected error occurred.";
+
       setErrorMessage(message);
       setStage("error");
     }
   };
 
-  const isLoading = ["uploading", "extracting", "analyzing", "saving", "done"].includes(stage);
+  const isLoading = [
+    "uploading",
+    "extracting",
+    "analyzing",
+    "saving",
+    "done",
+  ].includes(stage);
 
   return (
-    <div className="bg-white text-zinc-900 min-h-screen">
+    <div
+      className="min-h-screen text-gray-100 bg-cover bg-center bg-no-repeat"
+      style={{
+        backgroundImage: "url('/bg.png')",
+      }}
+    >
+      <header
+  className="sticky top-0 z-30 backdrop-blur-md border-b border-white/10 
+bg-gradient-to-r from-[#dbeafe]/90 via-[#eff6ff]/90 to-[#dbeafe]/90"
+>
+  <div className="max-w-[1450px] mx-auto px-4 lg:px-6 py-0 flex items-center gap-3 h-14">
+    
+    {/* LEFT: App title */}
+    <div className="flex items-center gap-3 flex-shrink-0">
+      <div className="w-1.5 h-6 rounded-full bg-indigo-500" />
 
-      {/* HEADER */}
-      <header className="p-4 border-b">
-        <h1 className="text-2xl font-bold">Upload Resume</h1>
-        <p className="text-sm text-zinc-500">AI-powered resume analyzer</p>
-      </header>
+      <span className="text-lg font-extrabold tracking-wide bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-500 bg-clip-text text-transparent font-sans">
+        Smart Resume Analyzer
+      </span>
+    </div>
 
-      <div className="max-w-xl mx-auto p-6 space-y-6">
+    {/* CENTER */}
+    <div className="flex-1" />
 
-        {/* FILE INPUT */}
-        <div className="space-y-2">
-          <label className="block text-sm font-medium">
-            Resume File{" "}
-            <span className="text-zinc-400">(PDF, TXT, DOCX, JPG, PNG — max 10MB)</span>
-          </label>
-          <input
-            type="file"
-            accept=".pdf,.txt,.docx,image/jpeg,image/png,image/webp"
-            onChange={handleFileChange}
-            disabled={isLoading}
-            className="block w-full text-sm border border-zinc-300 rounded-lg px-3 py-2 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:bg-zinc-100 file:text-sm file:font-medium cursor-pointer disabled:opacity-50"
-          />
-          {file && (
-            <p className="text-xs text-zinc-500">
-              Selected: {file.name} ({(file.size / 1024).toFixed(1)} KB)
+    {/* RIGHT */}
+    <div className="flex items-center gap-2 flex-shrink-0">
+      <button
+        onClick={() => router.push("/dashboard")}
+        className="h-9 px-3.5 rounded-xl text-xs font-semibold bg-gray-900 text-white hover:bg-gray-700 transition whitespace-nowrap"
+      >
+        ← Dashboard
+      </button>
+    </div>
+  </div>
+</header>
+
+      {/* MAIN */}
+      <main className="max-w-3xl mx-auto px-4 py-10">
+        <div className="bg-gradient-to-b from-white via-indigo-50/70 to-violet-100/60 border border-indigo-200/70 shadow-2xl rounded-3xl overflow-hidden">
+          {/* TOP */}
+          <div className="px-8 py-6 border-b border-indigo-100">
+            <h1 className="text-3xl font-extrabold text-gray-900">
+              Upload Resume
+            </h1>
+
+            <p className="text-sm text-gray-500 mt-1">
+              AI-powered resume analyzer
             </p>
-          )}
-        </div>
+          </div>
 
-        {/* JOB ROLE SELECT */}
-        <div className="space-y-2">
-          <label className="block text-sm font-medium">Target Job Role</label>
-          <select
-            value={jobRole}
-            onChange={(e) => setJobRole(e.target.value)}
-            disabled={isLoading}
-            className="block w-full text-sm border border-zinc-300 rounded-lg px-3 py-2 bg-white disabled:opacity-50"
-          >
-            <option value="">-- Select a job role --</option>
-            {JOB_ROLES.map((role) => (
-              <option key={role} value={role}>
-                {role}
-              </option>
-            ))}
-          </select>
-        </div>
+          {/* CONTENT */}
+          <div className="p-8 space-y-7">
+            {/* FILE INPUT */}
+            <div className="space-y-3">
+              <label className="block text-sm font-semibold text-gray-700">
+                Resume File
+              </label>
 
-        {/* STAGE STATUS */}
-        {stage !== "idle" && stage !== "error" && (
-          <div className="flex items-center space-x-3 bg-zinc-50 border rounded-lg px-4 py-3">
-            {isLoading && stage !== "done" && (
-              <svg
-                className="animate-spin h-5 w-5 text-zinc-600 flex-shrink-0"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
+              <div className="bg-white/80 border border-indigo-100 rounded-2xl p-4 shadow-sm">
+                <input
+                  type="file"
+                  accept=".pdf,.txt,.docx,image/jpeg,image/png,image/webp"
+                  onChange={handleFileChange}
+                  disabled={isLoading}
+                  className="block w-full text-sm text-gray-700 border border-gray-200 rounded-xl px-3 py-3 bg-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-indigo-100 file:text-indigo-700 file:font-semibold cursor-pointer disabled:opacity-50"
                 />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8v8z"
-                />
-              </svg>
+
+                <p className="text-xs text-gray-400 mt-2">
+                  PDF, TXT, DOCX, JPG, PNG, WEBP — max 10MB
+                </p>
+
+                {file && (
+                  <div className="mt-3 bg-indigo-50 border border-indigo-100 rounded-xl px-3 py-2">
+                    <p className="text-xs text-indigo-700 font-medium">
+                      Selected: {file.name} (
+                      {(file.size / 1024).toFixed(1)} KB)
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* JOB ROLE */}
+            <div className="space-y-3">
+              <label className="block text-sm font-semibold text-gray-700">
+                Target Job Role
+              </label>
+
+              <div className="bg-white/80 border border-violet-100 rounded-2xl p-4 shadow-sm">
+                <select
+                  value={jobRole}
+                  onChange={(e) => setJobRole(e.target.value)}
+                  disabled={isLoading}
+                  className="block w-full text-sm border border-gray-200 rounded-xl px-4 py-3 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-200 disabled:opacity-50"
+                >
+                  <option value="">-- Select a job role --</option>
+
+                  {JOB_ROLES.map((role) => (
+                    <option key={role} value={role}>
+                      {role}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* STATUS */}
+            {stage !== "idle" && stage !== "error" && (
+              <div className="flex items-center gap-3 bg-white/90 border border-indigo-100 rounded-2xl px-5 py-4 shadow-sm">
+                {isLoading && stage !== "done" && (
+                  <svg
+                    className="animate-spin h-5 w-5 text-indigo-600 flex-shrink-0"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8z"
+                    />
+                  </svg>
+                )}
+
+                {stage === "done" && <span>✅</span>}
+
+                <span className="text-sm font-medium text-gray-700">
+                  {stageLabel[stage]}
+                </span>
+              </div>
             )}
-            {stage === "done" && <span>✅</span>}
-            <span className="text-sm text-zinc-700">{stageLabel[stage]}</span>
-          </div>
-        )}
 
-        {/* ERROR */}
-        {stage === "error" && errorMessage && (
-          <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3">
-            <p className="text-sm text-red-600">⚠️ {errorMessage}</p>
-          </div>
-        )}
+            {/* ERROR */}
+            {stage === "error" && errorMessage && (
+              <div className="bg-red-50 border border-red-200 rounded-2xl px-5 py-4 shadow-sm">
+                <p className="text-sm text-red-600 font-medium">
+                  ⚠️ {errorMessage}
+                </p>
+              </div>
+            )}
 
-        {/* SUBMIT BUTTON */}
-        <button
-          onClick={handleSubmit}
-          disabled={isLoading}
-          className="w-full bg-black text-white py-2 rounded-lg font-medium hover:bg-zinc-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isLoading ? stageLabel[stage] : "Analyze Resume"}
-        </button>
-      </div>
+            {/* BUTTON */}
+            <button
+              onClick={handleSubmit}
+              disabled={isLoading}
+            className="w-full bg-gray-900 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-700 transition whitespace-nowrap"            >
+              {isLoading ? stageLabel[stage] : "Analyze Resume"}
+            </button>
+          </div>
+        </div>
+
+        {/* FOOTER */}
+        <div className="mt-6 py-3 flex items-center justify-center">
+          <p className="text-[11px] text-gray-300">
+            © 2026 Smart Resume Analyzer. All rights reserved.
+          </p>
+        </div>
+      </main>
     </div>
   );
 }
