@@ -107,8 +107,8 @@ Live Demo
 
 You can try to access the website thru the link,
 Here's the deployed Vercel link:
-**https://your-vercel-deployment-link.vercel.app
-**
+https://your-vercel-deployment-link.vercel.app
+
 
 Live Demo Link:
 
