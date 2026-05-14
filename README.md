@@ -1,10 +1,64 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Smart Resume Analyzer
+
+This is an AI-powered resume evaluation web application developed to help students, fresh graduates, and job seekers improve their resumes through Artificial Intelligence and Natural Language Processing (NLP). The system analyzes uploaded resumes, generates ATS compatibility feedback, provides professional recommendations, and calculates an overall resume quality score.
+
+The project was developed using modern web technologies including React, TypeScript, Tailwind CSS, Supabase, and AI-based processing tools.
+
+## Project Features
+
+- User authentication and account management
+- Resume upload support for PDF, DOCX, and TXT files
+- AI-powered resume analysis
+- ATS compatibility evaluation
+- Grammar, formatting, and readability checking
+- Keyword relevance and skills matching
+- Resume scoring system
+- AI-generated recommendations
+- Resume history dashboard
+- Cloud-based storage and database management
+
+## Technologies Used
+
+### Frontend
+- React
+- TypeScript
+- Tailwind CSS
+
+### Backend and Database
+- Supabase
+- Supabase Authentication
+- Supabase Cloud Storage
+
+### AI and Processing
+- Natural Language Processing (NLP)
+- AI Recommendation System
+
+### Deployment and Version Control
+- Vercel
+- GitHub
 
 ## Getting Started
 
-First, run the development server:
+First, clone the repository:
 
 ```bash
+git clone https://github.com/your-username/smart-resume-analyzer.git
+
+Navigate to the project directory:
+
+cd smart-resume-analyzer
+
+Install the project dependencies:
+
+npm install
+
+Create a .env file and configure the following environment variables:
+
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+Run the development server:
+
 npm run dev
 # or
 yarn dev
@@ -12,25 +66,67 @@ yarn dev
 pnpm dev
 # or
 bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:5173 with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+You can start editing the application by modifying the frontend components and pages. The application automatically updates as you save changes during development.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+System Overview
 
-## Learn More
+The Smart Resume Analyzer evaluates resumes using AI and NLP techniques. After a user uploads a resume and selects a target job role, the system performs text extraction and analyzes the content based on:
 
-To learn more about Next.js, take a look at the following resources:
+Grammar and spelling
+Formatting consistency
+Readability
+Keyword relevance
+ATS compatibility
+Resume completeness
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The system then generates:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+A resume score from 0–100
+AI-powered recommendations
+Categorized feedback and improvement suggestions
 
-## Deploy on Vercel
+All uploaded resumes and analysis records are securely stored using Supabase.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Resume Scoring Criteria
+Category	Percentage
+Grammar	25%
+Keywords	30%
+Formatting	20%
+Readability	15%
+Completeness	10%
+Important Notes
+The system currently supports English-language resumes only.
+Complex PDF layouts with tables or graphics may affect text extraction accuracy.
+Internet connectivity is required because AI processing and database services are cloud-based.
+AI-generated recommendations may vary depending on resume content and context.
+The application is designed primarily for general professional resume standards and common job roles.
+Live Demo
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Add your deployed Vercel link here:
+
+https://your-vercel-deployment-link.vercel.app
+Team Members
+Member	Role
+Marian Claire D. Bacas	Team Leader / Full Stack Developer
+Jeshua Emmanuel L. Cabading	Documentation / QA Support
+Princess Velle Jaspe	UI/UX Support / Research Assistant
+Mariel Mae K. Mapiot	Testing Support / Content Assistant
+Learn More
+
+To learn more about the technologies used in this project, refer to the following resources:
+
+React Documentation - https://react.dev/
+TypeScript Documentation - https://www.typescriptlang.org/docs/
+Tailwind CSS Documentation - https://tailwindcss.com/docs
+Supabase Documentation - https://supabase.com/docs
+Vercel Documentation - https://vercel.com/docs
+Deployment
+
+The recommended deployment platform for this project is Vercel.
+
+For deployment instructions, visit:
+
+https://vercel.com/docs
