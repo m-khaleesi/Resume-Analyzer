@@ -235,7 +235,7 @@ bg-gradient-to-r from-[#dbeafe]/90 via-[#eff6ff]/90 to-[#dbeafe]/90"
             {error && (
               <div className="mt-4 bg-red-50 border border-red-200 rounded-2xl px-4 py-3">
                 <p className="text-sm text-red-600 text-center">
-                  ⚠️ {error}
+                  {error}
                 </p>
               </div>
             )}
