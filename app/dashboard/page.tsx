@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// --- Types ---
 
 type Resume = {
   id: string;
@@ -24,11 +24,11 @@ type UserProfile = {
   email: string;
 };
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// --- Constants ---
 
 const PAGE_SIZE = 6;
 
-// ─── Skeleton Card ────────────────────────────────────────────────────────────
+// ---Skeleton Card ---
 
 function SkeletonCard() {
   return (
@@ -47,7 +47,7 @@ function SkeletonCard() {
   );
 }
 
-// ─── Confirm Modal ────────────────────────────────────────────────────────────
+// --- Confirm Modal ---
 
 function ConfirmModal({
   message,
@@ -86,7 +86,7 @@ function ConfirmModal({
   );
 }
 
-// ─── Edit Resume Modal ────────────────────────────────────────────────────────
+// --- Edit Resume Modal ---
 
 function EditResumeModal({
   resume,
@@ -210,7 +210,7 @@ function EditResumeModal({
   );
 }
 
-// ─── Edit Profile Modal ───────────────────────────────────────────────────────
+// --- Edit Profile Modal ---
 
 function EditProfileModal({
   profile,
@@ -305,7 +305,7 @@ function EditProfileModal({
   );
 }
 
-// ─── Resume Card ──────────────────────────────────────────────────────────────
+// --- Resume Card ---
 
 function ResumeCard({
   resume,
@@ -435,7 +435,7 @@ function ResumeCard({
   );
 }
 
-// ─── Main Dashboard ───────────────────────────────────────────────────────────
+// --- Main Dashboard ---
 
 export default function Dashboard() {
   const router = useRouter();
@@ -461,7 +461,7 @@ export default function Dashboard() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [editTarget, setEditTarget] = useState<Resume | null>(null);
 
-  // ── Init ──────────────────────────────────────────────────────────────────
+  // --- Init ---
 
   useEffect(() => {
     const init = async () => {
@@ -552,7 +552,7 @@ export default function Dashboard() {
     setCurrentPage(1);
   };
 
-  // ── Delete ────────────────────────────────────────────────────────────────
+  // --- Delete ---
 
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
@@ -590,7 +590,7 @@ export default function Dashboard() {
     setDeleteLoading(false);
   };
 
-  // ── Edit Resume ───────────────────────────────────────────────────────────
+  // --- Edit Resume ---
 
   const handleEditSave = async (updated: {
     job_role: string;
@@ -619,7 +619,7 @@ export default function Dashboard() {
     setEditTarget(null);
   };
 
-  // ── Edit Profile ──────────────────────────────────────────────────────────
+  // --- Edit Profile ---
 
   const handleProfileSave = async (updated: {
     username?: string;
@@ -644,7 +644,6 @@ export default function Dashboard() {
     router.replace("/login");
   };
 
-  // ─────────────────────────────────────────────────────────────────────────
 
   return (
     <div
@@ -652,7 +651,7 @@ export default function Dashboard() {
       style={{ backgroundImage: "url('/bg.png')" }}
     >
 
-      {/* NAVBAR — matches result page header */}
+      {/* NAVBAR */}
       <nav className="sticky top-0 z-40 backdrop-blur-md border-b border-white/10 bg-gradient-to-r from-[#dbeafe]/90 via-[#eff6ff]/90 to-[#dbeafe]/90 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-3">
 

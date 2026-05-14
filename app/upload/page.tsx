@@ -108,7 +108,7 @@ export default function UploadPage() {
     }
 
     try {
-      // STEP 1: Upload
+      // Upload
       setStage("uploading");
 
       const fileExt = file.name.split(".").pop();
@@ -131,7 +131,7 @@ export default function UploadPage() {
 
       const fileUrl = urlData.publicUrl;
 
-      // STEP 2: Extract Text
+      // Extract Text
       setStage("extracting");
 
       const extractForm = new FormData();
@@ -164,7 +164,7 @@ export default function UploadPage() {
 
       const resumeText: string = extractData.text;
 
-      // STEP 3: Analyze
+      // Analyze
       setStage("analyzing");
 
       let analyzeRes: Response;
@@ -216,7 +216,7 @@ export default function UploadPage() {
         }[];
       };
 
-      // STEP 4: Save
+      // Save
       setStage("saving");
 
       const { error: dbError } = await supabase
@@ -236,7 +236,7 @@ export default function UploadPage() {
         throw new Error(`Database save failed: ${dbError.message}`);
       }
 
-      // STEP 5: Redirect
+      // Redirect
       setStage("done");
 
       router.push("/result");
@@ -268,8 +268,8 @@ export default function UploadPage() {
     >
       <header
   className="sticky top-0 z-30 backdrop-blur-md border-b border-white/10 
-bg-gradient-to-r from-[#dbeafe]/90 via-[#eff6ff]/90 to-[#dbeafe]/90"
->
+  bg-gradient-to-r from-[#dbeafe]/90 via-[#eff6ff]/90 to-[#dbeafe]/90"
+  >
   <div className="max-w-[1450px] mx-auto px-4 lg:px-6 py-0 flex items-center gap-3 h-14">
     
     {/* LEFT: App title */}
@@ -292,8 +292,8 @@ bg-gradient-to-r from-[#dbeafe]/90 via-[#eff6ff]/90 to-[#dbeafe]/90"
       >
         ← Dashboard
       </button>
+      </div>
     </div>
-  </div>
 </header>
 
       {/* MAIN */}

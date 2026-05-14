@@ -132,8 +132,6 @@ ${resumeText.slice(0, 12000)}
           throw new Error("AI returned invalid structure.");
         }
 
-        // Build a structured feedback JSON string for the `feedback` column
-        // so the existing parseFeedback() on the frontend can consume it
         const feedbackPayload = JSON.stringify({
           strengths:               Array.isArray(parsed.strengths) ? parsed.strengths : [],
           weaknesses:              Array.isArray(parsed.weaknesses) ? parsed.weaknesses : [],

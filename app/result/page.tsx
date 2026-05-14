@@ -98,7 +98,7 @@ const HIGHLIGHT_STYLES: Record<string, HighlightStyle> = {
   },
 };
 
-// ─── Feedback Parser ──────────────────────────────────────────────────────────
+// --- Feedback Parser ---
 
 function parseFeedback(raw: string): StructuredFeedback {
   try {
@@ -124,7 +124,7 @@ function parseFeedback(raw: string): StructuredFeedback {
   }
 }
 
-// ─── Circular Score ───────────────────────────────────────────────────────────
+// --- Circular Score ---
 
 function CircularScore({ score }: { score: number }) {
   const [animated, setAnimated] = useState(0);
@@ -165,7 +165,7 @@ function CircularScore({ score }: { score: number }) {
   );
 }
 
-// ─── Score Bar ────────────────────────────────────────────────────────────────
+// --- Score Bar ---
 
 function ScoreBar({ label, value, color, delay = 0 }: { label: string; value: number; color: string; delay?: number }) {
   const [width, setWidth] = useState(0);
@@ -190,7 +190,7 @@ function ScoreBar({ label, value, color, delay = 0 }: { label: string; value: nu
   );
 }
 
-// ─── Feedback Tabs ────────────────────────────────────────────────────────────
+// --- Feedback Tabs ---
 
 function FeedbackTabs({ feedback }: { feedback: StructuredFeedback }) {
   const [activeTab, setActiveTab] = useState<FeedbackTab>("strengths");
@@ -318,7 +318,7 @@ function EmptyState({ message }: { message: string }) {
   );
 }
 
-// ─── Highlighted Resume Text ──────────────────────────────────────────────────
+// --- Highlighted Resume Text ---
 
 type Segment = { text: string; highlight: Highlight | null; highlightIndex: number | null };
 
@@ -371,7 +371,7 @@ function HighlightedResumeText({ text, highlights, activeHighlight, onHighlightC
   );
 }
 
-// ─── Resume Viewer ────────────────────────────────────────────────────────────
+// --- Resume Viewer ---
 
 function ResumeViewer({ fileUrl, highlights, activeHighlight, onHighlightClick }: {
   fileUrl: string; highlights: Highlight[]; activeHighlight: number | null; onHighlightClick: (i: number) => void;
@@ -442,7 +442,7 @@ function ResumeViewer({ fileUrl, highlights, activeHighlight, onHighlightClick }
   return <div className="p-6 text-sm text-gray-400">Unable to display this file type.</div>;
 }
 
-// ─── Analysis View ────────────────────────────────────────────────────────────
+// --- Analysis View ---
 
 function AnalysisView({ result, highlights, activeHighlight, onHighlightClick, feedback, activeView, setActiveView }: {
   result: ResumeResult; highlights: Highlight[]; activeHighlight: number | null;
@@ -462,13 +462,12 @@ function AnalysisView({ result, highlights, activeHighlight, onHighlightClick, f
   return (
     <div className="flex flex-col gap-4">
 
-      {/* ── MAIN 3-COLUMN GRID ── */}
-  <div className="grid grid-cols-12 gap-2 items-stretch h-[calc(120vh-140px)]">
-        {/* LEFT SIDEBAR */}
+      <div className="grid grid-cols-12 gap-2 items-stretch h-[calc(120vh-140px)]">
+      
+      {/* LEFT SIDEBAR */}
       <div className="col-span-3 flex flex-col gap-1 h-full min-h-0">          
   
-  
-      {/* Score Card — gradient */}
+      {/* Score Card */}
           <div className="bg-gradient-to-b from-white via-indigo-50/70 to-indigo-100/60 shadow-md border border-indigo-200/60 rounded-2xl border border-indigo-100 shadow-sm p-5 flex flex-col items-center gap-5 flex-shrink-0">
             <CircularScore score={result.score} />
             {breakdown && scoreItems.length > 0 && (
@@ -480,15 +479,15 @@ function AnalysisView({ result, highlights, activeHighlight, onHighlightClick, f
             )}
           </div>
 
-          {/* Target Role — gradient */}
-<div className="bg-gradient-to-br from-indigo-100/70 via-white to-violet-100/80 rounded-2xl border border-violet-200 shadow-sm p-4 flex-shrink-0">            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Target Role</p>
+      {/* Target Role */}
+          <div className="bg-gradient-to-br from-indigo-100/70 via-white to-violet-100/80 rounded-2xl border border-violet-200 shadow-sm p-4 flex-shrink-0">            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Target Role</p>
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0">💼</div>
               <p className="text-sm font-semibold text-gray-800 break-words leading-snug">{result.job_role}</p>
             </div>
           </div>
 
-          {/* Keywords + Legend side by side */}
+      {/* Keywords + Legend */}
           <div className="flex gap-3 flex-shrink-0">
             {keywords.length > 0 && (
               <div className="bg-gradient-to-br from-emerald-100/60 via-white to-teal-100/60 rounded-2xl border border-emerald-200 shadow-sm p-4 flex-1 min-w-0 max-h-64 overflow-y-auto">              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Keyword Analysis</p>
@@ -519,7 +518,7 @@ function AnalysisView({ result, highlights, activeHighlight, onHighlightClick, f
           </div>
         </div>
 
-        {/* CENTER: AI Highlights — gradient */}
+      {/* AI Highlights */}
         <div className="col-span-4 min-h-0 flex flex-col overflow-hidden">
           <div className="bg-gradient-to-b from-white via-amber-50/60 to-yellow-100/50 border border-amber-200/60 shadow-md rounded-2xl border border-amber-100 shadow-sm flex flex-col h-full overflow-hidden">
             <div className="px-5 py-4 border-b border-amber-100 flex items-center justify-between flex-shrink-0">
@@ -570,7 +569,7 @@ function AnalysisView({ result, highlights, activeHighlight, onHighlightClick, f
           </div>
         </div>
 
-        {/* RIGHT: Feedback Tabs */}
+        {/* Feedback Tabs */}
         <div className="col-span-5 min-h-0 flex flex-col overflow-hidden">
           <FeedbackTabs feedback={feedback} />
         </div>
@@ -578,14 +577,14 @@ function AnalysisView({ result, highlights, activeHighlight, onHighlightClick, f
 
       
       {/* ── FOOTER ── */}
-<div className="mt-2 py-2 flex items-center justify-center border-t border-gray-100">
-  <p className="text-[11px] text-gray-400">© 2026 Smart Resume Analyzer. All rights reserved. Submitted by: Bacas | Cabading | Jaspe | Mapiot</p>
-</div>
-    </div>
-  );
-}
+      <div className="mt-2 py-2 flex items-center justify-center border-t border-gray-100">
+        <p className="text-[11px] text-gray-400">© 2026 Smart Resume Analyzer. All rights reserved. Submitted by: Bacas | Cabading | Jaspe | Mapiot</p>
+      </div>
+          </div>
+        );
+      }
 
-// ─── Resume View Panel ────────────────────────────────────────────────────────
+// --- Resume View Panel ---
 
 function ResumeViewPanel({ result, highlights, activeHighlight, onHighlightClick, onSwitchToAnalysis }: {
   result: ResumeResult; highlights: Highlight[]; activeHighlight: number | null;
@@ -616,7 +615,7 @@ function ResumeViewPanel({ result, highlights, activeHighlight, onHighlightClick
       <div className={["bg-white/90 backdrop-blur-sm rounded-2xl border border-gray-100 overflow-hidden", isPDF ? "h-[72vh]" : "max-h-[72vh] overflow-y-auto"].join(" ")}>
         <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white/90 backdrop-blur-sm z-10">
   
-  {/* LEFT: Back button */}
+  {/* Back button */}
   <button
     onClick={onSwitchToAnalysis}
     className="text-xs font-semibold text-gray-500 hover:text-gray-900 transition flex items-center gap-1"
@@ -624,7 +623,7 @@ function ResumeViewPanel({ result, highlights, activeHighlight, onHighlightClick
     ← Back to Analysis
   </button>
 
-  {/* CENTER / LABEL */}
+  {/* LABEL */}
   <div className="flex items-center gap-2">
     <span className="w-2 h-2 rounded-full bg-green-400" />
     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
@@ -632,7 +631,7 @@ function ResumeViewPanel({ result, highlights, activeHighlight, onHighlightClick
     </p>
   </div>
 
-  {/* RIGHT: Open original */}
+  {/* Open original */}
   <a
     href={result.file_url}
     target="_blank"
@@ -671,7 +670,7 @@ function ResumeViewPanel({ result, highlights, activeHighlight, onHighlightClick
   );
 }
 
-// ─── Result Content ───────────────────────────────────────────────────────────
+// --- Result Content ---
 
 function ResultContent() {
   const [result, setResult] = useState<ResumeResult | null>(null);
@@ -748,14 +747,14 @@ function ResultContent() {
   const structuredFeedback = parseFeedback(result.feedback);
 
   return (
-<div
-  className="min-h-screen text-gray-100 bg-cover bg-center bg-no-repeat"
-  style={{
-    backgroundImage: "url('/bg.png')",
-  }}
->     
+    <div
+      className="min-h-screen text-gray-100 bg-cover bg-center bg-no-repeat"
+      style={{
+        backgroundImage: "url('/bg.png')",
+      }}
+    >     
       
-      {/* ── HEADER ── */}
+      {/* HEADER */}
     <header className="sticky top-0 z-30 backdrop-blur-md border-b border-white/10 
     bg-gradient-to-r from-[#dbeafe]/90 via-[#eff6ff]/90 to-[#dbeafe]/90">        
         <div className="max-w-[1450px] mx-auto px-4 lg:px-6 py-0 flex items-center gap-3 h-14">
@@ -836,7 +835,7 @@ function ResultContent() {
         </div>
       </header>
 
-      {/* ── MAIN ── */}
+      {/* MAIN */}
       <main className="max-w-[1450px] mx-auto px-4 lg:px-6 py-4">
         {activeView === "analysis" ? (
           <AnalysisView
@@ -862,7 +861,7 @@ function ResultContent() {
   );
 }
 
-// ─── Page Export ──────────────────────────────────────────────────────────────
+// --- Page Export ---
 
 export default function ResultPage() {
   return (
