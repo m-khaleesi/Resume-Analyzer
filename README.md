@@ -15,7 +15,7 @@ The project was developed using modern web technologies including React, TypeScr
 - Resume scoring system
 - AI-generated recommendations
 - Resume history dashboard
-- Cloud-based storage and database management
+- Database management
 
 ## Technologies Used
 
@@ -67,7 +67,7 @@ pnpm dev
 # or
 bun dev
 
-Open http://localhost:5173 with your browser to see the result.
+Open http://localhost:3000 with your browser to see the result.
 
 You can start editing the application by modifying the frontend components and pages. The application automatically updates as you save changes during development.
 
@@ -105,17 +105,20 @@ AI-generated recommendations may vary depending on resume content and context.
 The application is designed primarily for general professional resume standards and common job roles.
 Live Demo
 
-Add your deployed Vercel link here:
+You can try to access the website thru the link,
+Here's the deployed Vercel link:
+**https://your-vercel-deployment-link.vercel.app
+**
 
-https://your-vercel-deployment-link.vercel.app
+Live Demo Link:
+
 
 Team Members
 Member	Role
-Marian Claire D. Bacas	Team Leader / Full Stack Developer
+Marian Claire D. Bacas	Team Leader / Full Stack Developer / UI/UX Support
 Jeshua Emmanuel L. Cabading	Documentation / QA Support
-Princess Velle Jaspe	UI/UX Support / Research Assistant
-Mariel Mae K. Mapiot	Testing Support / Content Assistant
-Learn More
+Princess Velle Jaspe	UI/UX Support
+Mariel Mae K. Mapiot	Testing Support
 
 To learn more about the technologies used in this project, refer to the following resources:
 
