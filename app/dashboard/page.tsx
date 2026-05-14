@@ -305,6 +305,74 @@ function EditProfileModal({
   );
 }
 
+// --- Feedback Preview Helper ---
+
+function FeedbackPreview({ feedback }: { feedback: string }) {
+  let parsed: Record<string, unknown> | null = null;
+
+  try {
+    const cleaned = feedback.replace(/```json|```/g, "").trim();
+    const candidate = JSON.parse(cleaned);
+
+    if (typeof candidate === "object" && candidate !== null) {
+      parsed = candidate;
+    }
+  } catch {
+    // not JSON
+  }
+
+  if (parsed) {
+    const strengths = (parsed.strengths as string[]) ?? [];
+    const weaknesses = (parsed.weaknesses as string[]) ?? [];
+
+    return (
+      <div className="space-y-1.5 flex-1">
+        {strengths.slice(0, 1).map((s, i) => (
+          <div key={i} className="flex gap-1.5 items-start">
+            <span className="text-green-500 text-xs mt-0.5 flex-shrink-0">
+              ✓
+            </span>
+
+            <p className="text-xs text-gray-600 line-clamp-2">
+              {s}
+            </p>
+          </div>
+        ))}
+
+        {weaknesses.slice(0, 1).map((w, i) => (
+          <div key={i} className="flex gap-1.5 items-start">
+            <span className="text-red-400 text-xs mt-0.5 flex-shrink-0">
+              ✗
+            </span>
+
+            <p className="text-xs text-gray-600 line-clamp-2">
+              {w}
+            </p>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  const clean = feedback
+    .replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/^#{1,3}\s+/gm, "")
+    .replace(/^[-•]\s+/gm, "")
+    .replace(/\n{2,}/g, " ")
+    .trim();
+
+  const firstChunk = clean
+    .split(". ")
+    .slice(0, 2)
+    .join(". ");
+
+  return (
+    <p className="text-xs text-indigo-700/80 line-clamp-2 flex-1">
+      {firstChunk}
+    </p>
+  );
+}
+
 // --- Resume Card ---
 
 function ResumeCard({
@@ -420,9 +488,8 @@ function ResumeCard({
 
       {/* Feedback preview */}
       {!resume.notes && (
-<p className="text-xs text-indigo-700/80 line-clamp-2 flex-1">
-  {resume.feedback}
-</p>      )}
+        <FeedbackPreview feedback={resume.feedback} />
+      )}
 
       {/* View Button */}
       <button

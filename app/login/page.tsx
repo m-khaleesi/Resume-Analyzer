@@ -53,7 +53,7 @@ export default function AuthPage() {
       const user = data.user;
 
       if (!user) {
-        setError("User not created yet. Check email confirmation.");
+        setError("User not created yet. Register first.");
         return;
       }
 
@@ -72,7 +72,7 @@ export default function AuthPage() {
         return;
       }
 
-      alert("Registration successful! Check email.");
+      alert("Registration successful! Go ahead ang login now.");
     }
   };
 
