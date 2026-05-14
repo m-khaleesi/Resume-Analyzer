@@ -39,25 +39,25 @@ The project was developed using modern web technologies including React, TypeScr
 
 ## Getting Started
 
-First, clone the repository:
+### First, clone the repository:
 
 ```bash
 git clone https://github.com/your-username/smart-resume-analyzer.git
 
-Navigate to the project directory:
+### Navigate to the project directory:
 
 cd smart-resume-analyzer
 
-Install the project dependencies:
+### Install the project dependencies:
 
 npm install
 
-Create a .env file and configure the following environment variables:
+### Create a .env file and configure the following environment variables:
 
 VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 
-Run the development server:
+### Run the development server:
 
 npm run dev
 # or
@@ -67,13 +67,13 @@ pnpm dev
 # or
 bun dev
 
-Open http://localhost:5173 with your browser to see the result.
+### Open http://localhost:5173 with your browser to see the result.
 
-You can start editing the application by modifying the frontend components and pages. The application automatically updates as you save changes during development.
+### You can start editing the application by modifying the frontend components and pages. The application automatically updates as you save changes during development.
 
-System Overview
+## System Overview
 
-The Smart Resume Analyzer evaluates resumes using AI and NLP techniques. After a user uploads a resume and selects a target job role, the system performs text extraction and analyzes the content based on:
+### The Smart Resume Analyzer evaluates resumes using AI and NLP techniques. After a user uploads a resume and selects a target job role, the system performs text extraction and analyzes the content based on:
 
 Grammar and spelling
 Formatting consistency
@@ -82,7 +82,7 @@ Keyword relevance
 ATS compatibility
 Resume completeness
 
-The system then generates:
+### The system then generates:
 
 A resume score from 0–100
 AI-powered recommendations
@@ -90,7 +90,7 @@ Categorized feedback and improvement suggestions
 
 All uploaded resumes and analysis records are securely stored using Supabase.
 
-Resume Scoring Criteria
+### Resume Scoring Criteria
 Category	Percentage
 Grammar	25%
 Keywords	30%
@@ -108,7 +108,8 @@ Live Demo
 Add your deployed Vercel link here:
 
 https://your-vercel-deployment-link.vercel.app
-Team Members
+
+### Team Members
 Member	Role
 Marian Claire D. Bacas	Team Leader / Full Stack Developer
 Jeshua Emmanuel L. Cabading	Documentation / QA Support
